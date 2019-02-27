@@ -92,7 +92,6 @@ def parse_mp_page(bs):
     }
     return mp_dict
 
-
 def get_mp_list():
     r = get_mp_list_response()
     parser = create_parser(r)
@@ -106,10 +105,23 @@ def get_mp_page(url:str):
     mp_dict = parse_mp_page(parser)
     return mp_dict
 
-if __name__ == '__main__':
-    # # Return title and cities
+def get_city_list(cities):
+    return list(map(lambda x: x['city'], cities))
 
+def get_party_list(cities):
+    return list(set([item for lst in list(map(lambda x: list(set(map(lambda y: y['party'], x['city_mps']))), cities)) for item in lst]))
+
+if __name__ == '__main__':
+    # Return title and cities
+    title, cities = get_mp_list()
+    print(cities)
 
     # Get mp page
     url = "https://www.tbmm.gov.tr/develop/owa/milletvekillerimiz_sd.bilgi?p_donem=27&p_sicil=7542"
     print(get_mp_page(url))
+
+    # Get city list
+    print(get_city_list(cities))
+
+    # Get party list
+    print(get_party_list(cities))
