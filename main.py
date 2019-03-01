@@ -1,6 +1,8 @@
 import re
+from collections import Counter
 import requests
 from bs4 import BeautifulSoup
+from utils import save_json
 
 MP_LIST_URL = "https://www.tbmm.gov.tr/develop/owa/milletvekillerimiz_sd.liste"
 
@@ -52,6 +54,7 @@ def parse_mp_list(bs, is_verbose:bool=False):
                 mp_name = is_mp.text
                 mp_url = is_mp.attrs['href']
                 mp_party = row.findAll('td')[-1].text
+                mp_city = city
 
                 if is_verbose:
                     print("MP: {}, Party: {}".format(mp_name, mp_party))
@@ -62,6 +65,7 @@ def parse_mp_list(bs, is_verbose:bool=False):
                 mp_registery = m.group(2) # p_sicil
                 mp_dict = {
                             'name': mp_name,
+                            'city': mp_city,
                             'term': mp_term,
                             'party': mp_party,
                             'registery': mp_registery,
@@ -105,8 +109,38 @@ def get_mp_page(url:str):
     mp_dict = parse_mp_page(parser)
     return mp_dict
 
-def get_city_list(cities):
+def get_city_name_list(cities):
     return list(map(lambda x: x['city'], cities))
+
+def get_city_num_of_mps_list(cities):
+    return list(map(lambda x: len(x['city_mps']), cities))
+
+def get_city_json(cities):
+    name_list = get_city_name_list(cities)
+    num_of_mps_list = get_city_num_of_mps_list(cities)
+
+    city_json = []
+    for name, num_of_mps in zip(name_list, num_of_mps_list):
+        city_json.append({"name":name, "num_of_mps":num_of_mps})
+
+    return city_json
+
+def get_mp_json(cities):
+    mp_json = []
+
+    for city in cities:
+        mp_json += city["city_mps"]
+
+    return mp_json
+
+def get_party_json(cities):
+    cntr = Counter([item for lst in list(map(lambda x: list(map(lambda y: y['party'], x['city_mps'])), cities)) for item in lst])
+
+    party_json = []
+    for k, v in cntr.items():
+        party_json.append({"name":k, "num_of_mps":v})
+
+    return party_json
 
 def get_party_list(cities):
     return list(set([item for lst in list(map(lambda x: list(set(map(lambda y: y['party'], x['city_mps']))), cities)) for item in lst]))
@@ -114,14 +148,14 @@ def get_party_list(cities):
 if __name__ == '__main__':
     # Return title and cities
     title, cities = get_mp_list()
-    print(cities)
+    save_json(cities, "cities.json")
 
-    # Get mp page
-    url = "https://www.tbmm.gov.tr/develop/owa/milletvekillerimiz_sd.bilgi?p_donem=27&p_sicil=7542"
-    print(get_mp_page(url))
+    # # Get mp page
+    # url = "https://www.tbmm.gov.tr/develop/owa/milletvekillerimiz_sd.bilgi?p_donem=27&p_sicil=7542"
+    # print(get_mp_page(url))
 
-    # Get city list
-    print(get_city_list(cities))
+    # # Get city list
+    # print(get_city_list(cities))
 
-    # Get party list
-    print(get_party_list(cities))
+    # # Get party list
+    # print(get_party_list(cities))
