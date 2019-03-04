@@ -17,10 +17,10 @@ def create_graph(   bolt:Union[bool, None]=None,
     return graph
 
 if __name__ == '__main__':
-    cities = load_json("cities.json")
-    city_json = get_city_json(cities)
-    mp_json = get_mp_json(cities)
-    party_json = get_party_json(cities)
+    tbmm_json = load_json("tbmm.json")
+    city_json = tbmm_json['cities']
+    mp_json = tbmm_json['mps']
+    party_json = tbmm_json['parties']
 
     graph = create_graph(password="a51v63r82e92f95")
 

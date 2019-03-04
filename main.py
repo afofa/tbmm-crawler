@@ -22,7 +22,7 @@ def get_title(bs) -> str:
     title = bs.find('span', {'class':'AltKonuBaslikB16Gri'}).text.strip()
     return title
 
-def parse_mp_list(bs, is_verbose:bool=False):
+def parse_mp_list_old(bs, is_verbose:bool=False):
     rows = bs.find('table')
     cities = []
     for i, row in enumerate(rows):
@@ -74,6 +74,64 @@ def parse_mp_list(bs, is_verbose:bool=False):
                 cities[-1]['city_mps'].append(mp_dict)
 
     return cities
+
+def parse_mp_list(bs, is_verbose:bool=False):
+    rows = bs.find('table')
+    cities = []
+    mps = []
+    for i, row in enumerate(rows):
+
+        if is_verbose:
+            print(i)
+            print(row)
+        
+        is_city = row.find('span')
+
+        if is_verbose:
+            print('is city', is_city)
+
+        if is_city is not None and is_city != -1:
+            city = is_city.text
+            city_dict = {'name': city, 'num_of_mps': 0}
+            cities.append(city_dict)
+
+            if is_verbose:
+                print("CITY: {}".format(city))
+
+        else:
+            is_mp = row.find('a')
+            
+            if is_verbose:
+                print('is_mp', is_mp)
+
+            if is_mp is not None and is_mp != -1:
+                mp_name = is_mp.text
+                mp_url = is_mp.attrs['href']
+                mp_party = row.findAll('td')[-1].text
+                mp_city = city
+
+                if is_verbose:
+                    print("MP: {}, Party: {}".format(mp_name, mp_party))
+                    print(mp_url)
+
+                m = re.match("https://www.tbmm.gov.tr/develop/owa/milletvekillerimiz_sd.bilgi\?p_donem=(\d+)&p_sicil=(\d+)", mp_url)
+                mp_term = m.group(1) # p_donem
+                mp_registery = m.group(2) # p_sicil
+                mp_dict = {
+                            'name': mp_name,
+                            'city': mp_city,
+                            'term': mp_term,
+                            'party': mp_party,
+                            'registery': mp_registery,
+                            'url': mp_url,
+                        }
+                mps.append(mp_dict)
+                cities[-1]['num_of_mps'] += 1
+
+    parties = [{'name':k, 'num_of_mps':v} for k, v in Counter(map(lambda x: x["party"], mps)).items()]
+    tbmm_json = {'cities':cities, 'mps':mps, 'parties':parties}
+    
+    return tbmm_json
 
 def parse_mp_page(bs):
     mp_name = bs.find('div', {'id': 'mv_isim'}).text.strip()
@@ -147,8 +205,8 @@ def get_party_list(cities):
 
 if __name__ == '__main__':
     # Return title and cities
-    title, cities = get_mp_list()
-    save_json(cities, "cities.json")
+    title, tbmm = get_mp_list()
+    save_json(tbmm, "tbmm.json")
 
     # # Get mp page
     # url = "https://www.tbmm.gov.tr/develop/owa/milletvekillerimiz_sd.bilgi?p_donem=27&p_sicil=7542"
