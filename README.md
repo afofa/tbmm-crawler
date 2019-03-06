@@ -1,5 +1,13 @@
 # tbmm-crawler
-Crawler for TBMM
+Crawler for [TBMM website](https://www.tbmm.gov.tr).
+
+## Usage
+
+Run the command below in terminal. See `main.py` for options to run the script.
+
+```bash
+$ python3 main.py
+```
 
 ## TODO
 
